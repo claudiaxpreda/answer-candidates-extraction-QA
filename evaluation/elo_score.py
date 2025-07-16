@@ -140,4 +140,3 @@ if option != ALL or option == TEST:
 else:
     print(elo_compute_battle())
 
-
