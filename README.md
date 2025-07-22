@@ -35,7 +35,7 @@ For testing we prepare the following data:
 For BLEURT comparison of the above 3 methods with the ground truth answers from FiarytaleQA we generate tuples of shape (label, candidate, BLEURT score) where label is the answer in the original dataset. We constructed a weighted graph to compute the maximum weight matching, ensuring that
 each entry is only used once. We compute the average score obtained for each context at the dataset level. 
 
-### ELO Ranking
+## ELO Ranking
 - We use Llama 3.3 70B as a judge model for the followinng pairs: (DeBERTa-classification top 10, ground truth in Fairytale QA), (DeBERTa-classification top 10, Llama-Agen), (Llama-Agen, ground truth in Fairytale QA).
 - We ask the judge model to decide which pair question-answer is better for the provided context, making sure for each match we generate all pairs possible.
 - The prompt used can be found in evaluation/prompts.py.
