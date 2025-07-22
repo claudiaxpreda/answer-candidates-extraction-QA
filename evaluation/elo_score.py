@@ -19,6 +19,7 @@ MODEL_GT = "MODGT"
 GT_LLM = "GTLLM"
 ALL = "ALL"
 TEST = "TEST"
+DATA_DIR = ""
 
 path_map = {
   'MODLLM': '',
@@ -86,7 +87,7 @@ def process_result(data, model_1, model_2):
     return games
 
 def read_data(option): 
-    data_path = 'fairytale_dataset/set1/evaluation/' + path_map[option]
+    data_path = DATASET_DIR + path_map[option]
     data = pd.read_csv(data_path)
 
     return data
@@ -95,7 +96,6 @@ def elo_compute(data, R1, R2):
     data['result'] = data.apply(lambda x: compute_result(x.order, x.verdict), axis = 1)
     results = data['result'].to_list()
     
-    print(len(results))
     print(results.count(0))
     for result in results: 
         (R1, R2) = elo_compute_step(R1, R2, result)
@@ -106,21 +106,18 @@ def elo_compute_battle():
     all_games = [] 
 
     for option in (MODEL_LLM, MODEL_GT, GT_LLM): 
-        print(option)
         data = read_data(option)
         (model_1, model_2) = get_model_option(option) 
         games = process_result(data, model_1, model_2)
         all_games += games
 
-    print(len(all_games))
     random.shuffle(all_games)
     
     scores = model_score_init
 
     for (model_1, model_2, result) in all_games: 
         (R1, R2) = elo_compute_step(scores[model_1], scores[model_2], result)
-        print (model_1, model_2, R1, R2)
-
+        print('Model 1 - {} - Score: {} \n Model 2 - {} - Score : {}'.format(model_1, R1, model_2, R2))
         scores[model_1] = R1
         scores[model_2] = R2
 
