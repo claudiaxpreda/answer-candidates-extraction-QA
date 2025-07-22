@@ -51,20 +51,26 @@ def qgen_split(prompt, tokenizer, model):
   return decoded
 
 df_class = pd.read_csv(DATASET_PATH)
-model_agen = AutoModelForCausalLM.from_pretrained(MODEL_NAME, token=HUGGING_TOKEN).to("cuda")
-tokenizer_agen = AutoTokenizer.from_pretrained(MODEL_NAME, padding_side="left", token=HUGGING_TOKEN)
+model_agen = AutoModelForCausalLM.from_pretrained(
+  MODEL_NAME, token=HUGGING_TOKEN).to("cuda")
+tokenizer_agen = AutoTokenizer.from_pretrained(
+  MODEL_NAME, padding_side="left", token=HUGGING_TOKEN)
 tokenizer_agen.pad_token_id = 128002
 
 
 dataset = []
 
+# For each GT pair generate Llama-Agen candidate
 for key, group in df_class.groupby(['context'], sort=False):
     model_ans = group['gt_answer'].to_list()
     model_qs = group['gt_question'].to_list()
     prompt = ag_prompt_generate(key[0])
     prompts_asel = [prompt] * len(model_ans)
    
-    model_inputs = tokenizer_agen(prompts_asel, return_tensors="pt", padding='longest', truncation=True, max_length=2048*2).to("cuda")
+    model_inputs = tokenizer_agen(
+      prompts_asel, return_tensors="pt", padding='longest',
+      truncation=True, max_length=2048*2).to("cuda")
+  
     predictions = model_agen.generate(
         input_ids=model_inputs.input_ids,
         attention_mask=model_inputs.attention_mask,
@@ -87,10 +93,15 @@ for key, group in df_class.groupby(['context'], sort=False):
 
 df = pd.DataFrame.from_records(dataset, columns=['context', 'answer_1','question_1','answer_2'])
 
-model_name='claudiapreda/llama32-3b_qgen_ft_v2'
+# For each Llama-Agen candidate generate a question to form the pair
+model_name='llama32-3b_qgen_ft_v2'
 
-tokenizerQ = AutoTokenizer.from_pretrained(model_name, token=HUGGING_TOKEN, padding_side="left")
-modelQ = AutoModelForCausalLM.from_pretrained(model_name, token=HUGGING_TOKEN, device_map="auto", torch_dtype=torch.bfloat16)
+tokenizerQ = AutoTokenizer.from_pretrained(
+  model_name, token=HUGGING_TOKEN, padding_side="left")
+
+modelQ = AutoModelForCausalLM.from_pretrained(
+  model_name, token=HUGGING_TOKEN, device_map="auto",
+  torch_dtype=torch.bfloat16)
   
 df['prompt'] = df.progress_apply(lambda e: gq_prompt_generate(e), axis=1)
 prompts = df['prompt'].to_list()

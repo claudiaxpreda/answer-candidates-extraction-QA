@@ -1,19 +1,20 @@
 import ast
-import pandas as pd
 import transformers
-import numpy as np
 import sys
 import torch
 import json
-from tqdm import tqdm
 import itertools
 
+import numpy as np
+import pandas as pd
+
+from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 DATASET_PATH  = ''
 DESTINATION_PATH = ''
 HUGGING_TOKEN = ''
-#
+
 MODEL_NAME_AGEN = ''
 MODEL_NAME_QGEN = ''
 MAX_LEN_SEQ = 512
@@ -56,16 +57,22 @@ model_agen = AutoModelForCausalLM.from_pretrained(MODEL_NAME_AGEN, token=HUGGING
 tokenizer_agen = AutoTokenizer.from_pretrained(MODEL_NAME_AGEN, padding_side="left", token=HUGGING_TOKEN)
 tokenizer_agen.pad_token_id = 128002
 
-
+# For each top 10, generate an asnwer with Llama
 dataset = []
 for key, group in df_class.groupby(['context'], sort=False):
-    gp = group.sort_values(['label_pred', 'prob_score'], ascending=[True, False]).drop_duplicates(['sequence'], keep='first').head(10)
+    gp = group.sort_values(
+      ['label_pred', 'prob_score'], ascending=[True, False]).drop_duplicates(
+        ['sequence'], keep='first').head(10)
+    
     model_ans = gp['sequence'].to_list()
     model_qs = gp['question_agen'].to_list()
     prompt = ag_prompt_generate(key[0])
     prompts_asel = [prompt] * 10
    
-    model_inputs = tokenizer_agen(prompts_asel, return_tensors="pt", padding='longest', truncation=True, max_length=2048*2).to("cuda")
+    model_inputs = tokenizer_agen(
+      prompts_asel, return_tensors="pt", padding='longest',
+      truncation=True, max_length=2048*2).to("cuda")
+    
     predictions = model_agen.generate(
         input_ids=model_inputs.input_ids,
         attention_mask=model_inputs.attention_mask,
@@ -86,10 +93,16 @@ for key, group in df_class.groupby(['context'], sort=False):
     dataset += pairs
 
 
-df = pd.DataFrame.from_records(dataset, columns=['context', 'answer_1','question_1','answer_2'])
+df = pd.DataFrame.from_records(dataset,
+      columns=['context', 'answer_1','question_1','answer_2'])
 
-tokenizerQ = AutoTokenizer.from_pretrained(MODEL_NAME_QGEN, token=HUGGING_TOKEN, padding_side="left")
-modelQ = AutoModelForCausalLM.from_pretrained(MODEL_NAME_QGEN, token=HUGGING_TOKEN, device_map="auto", torch_dtype=torch.bfloat16)
+# For each Llama genrated candidate, generate a question. 
+tokenizerQ = AutoTokenizer.from_pretrained(
+  MODEL_NAME_QGEN, token=HUGGING_TOKEN, padding_side="left")
+
+modelQ = AutoModelForCausalLM.from_pretrained(
+  MODEL_NAME_QGEN, token=HUGGING_TOKEN, device_map="auto", 
+  torch_dtype=torch.bfloat16)
   
 df['prompt'] = df.progress_apply(lambda e: gq_prompt_generate(e), axis=1)
 prompts = df['prompt'].to_list()
@@ -105,4 +118,3 @@ for i in tqdm(range(0, len(prompts), batch_size)):
 df['question_2'] = generated_questions
 df.drop(columns=['prompt'], inplace=True)
 df.to_csv(DESTINATION_PATH, index=False)
-

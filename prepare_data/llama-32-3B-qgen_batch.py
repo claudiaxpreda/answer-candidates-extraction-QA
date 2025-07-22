@@ -33,7 +33,12 @@ def write_slice(df, destination_file):
 
 def qgen_split(prompt, tokenizer, model):
 
-  model_inputs =  tokenizer(prompt, return_tensors="pt", padding='longest', truncation=True, max_length=2048*2).to(device)
+  model_inputs =  tokenizer(
+    prompt, return_tensors="pt",
+    padding='longest',
+    truncation=True,
+    max_length=2048*2
+    ).to(device)
   
   generated_ids = model.generate(
     input_ids=model_inputs.input_ids,
@@ -87,7 +92,6 @@ def main(start, end, slice):
   source_dataset = read_slice(filename)
 
   if end == 'end':
-    print('hello')
     source_dataset = source_dataset.iloc[int(start):]
   else: 
     source_dataset = source_dataset.iloc[int(start):int(end)]

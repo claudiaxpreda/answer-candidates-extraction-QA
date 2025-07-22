@@ -36,7 +36,8 @@ def create_edges(labels, targets):
     refs.append(l)
     cands.append(t)
     with torch.no_grad():
-      inputs = tokenizer(refs, cands, padding='longest', return_tensors='pt').to('cuda')
+      inputs = tokenizer(
+        refs, cands, padding='longest', return_tensors='pt').to('cuda')
       res = model(**inputs).logits.flatten().tolist()
   
   edges = list(zip(refs, cands, res))
@@ -47,7 +48,9 @@ df_llama_gp = df_llama.groupby(['context'])
 
 res = []
 for key, group in df_class.groupby(['context'], sort=False):
-  gp = group.sort_values(['label_pred','prob_score'], ascending=[True, False]).drop_duplicates(['sequence'], keep='first').head(10)
+  gp = group.sort_values(['label_pred','prob_score'], ascending=[True, False]
+    ).drop_duplicates(['sequence'], keep='first').head(10)
+
   sequences = gp['sequence'].to_list()
   seq_gp = df_llama_gp.get_group(key)['gt_answer'].tolist()
   edges = create_edges(seq_gp, sequences)

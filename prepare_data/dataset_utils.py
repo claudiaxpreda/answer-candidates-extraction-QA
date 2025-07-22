@@ -74,18 +74,3 @@ TASK_1 = 'concat'
 TASK_2 = 'plot'
 FOLDER = 'fairytale_dataset/set1/qloss/'
 TARGET = f'fairytale_dataset/set1/final/{SPLIT}_all.csv'
-
-task = 'concat'
-
-if task == TASK_1:
-  indexes = INDEXES_TEST_VAL
-  list_of_files = []
-
-  for index in indexes:
-    list_of_files.append(f'ft_qloss_{SPLIT}_{index}.csv')
-
-  print(len(list_of_files))
-  df_concat = concat_files(list_of_files, FOLDER, write_output=True, target_name=TARGET)
-  ax = df_concat.plot.hist(column=["rloss"], figsize=(10, 8), xticks = np.arange(0, 60, 5), yticks=np.arange(0,550000, 50000), xlabel = 'loss', ylabel = 'count')
-  fig = ax.get_figure()
-  fig.savefig(f'{SPLIT}_hist.png')

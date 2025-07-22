@@ -1,13 +1,14 @@
 import ast
-import pandas as pd
-import transformers
-import numpy as np
+import itertools
+import json
 import sys
 import torch
-import json
-from tqdm import tqdm
-import itertools
+import transformers
 
+import numpy as np
+import pandas as pd
+
+from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 DATASET_PATH = ''
@@ -21,6 +22,7 @@ df_og_gp = df_og.groupby(['context'], sort=False)
 
 dataset = []
 
+# All (GT, Model top 10) combination
 for key, group in df_class.groupby(['context'], sort=False):
     gp = group.sort_values(['label_pred','prob_score'], ascending=[True, False]).drop_duplicates(['sequence'], keep='first').head(10)
     model_ans = gp['sequence'].to_list()
