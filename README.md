@@ -43,3 +43,10 @@ each entry is only used once. We compute the average score obtained for each con
 - We use a ELO Ranking system with K=32 and INIT_SCORE=1500.
 - We compute the score for individual matches and an overall score.
 - Our model (DeBERTa-classification top 10) lost to the Ground Truth pairs, but won againts the fine-tuned Llama.
+
+## Selection Strategies
+We define as an example three strategies that assure a better coverage of selecting candidates within the reference text: 
+- Top K Filtered: Randomly selecting a candidate and the top K - 1 different answers from the reference. To compute the similarity we use BLEURT. 
+- K-Means++ : K-Means++ initialization of centroids while using as a criterion a score that represents the average between the semantic distance and the text distance. For the semantic distance, we copute BLEURT score and select. For the distance, we compute the characters distance between two candidates, divided by the text length. 
+- Top K Sentences: selecting the highest classified answer from each of the Top K Sentences. The top K sentences are computed using Transformes Sentences class for sentences similarity; then we apply PageRank.
+
