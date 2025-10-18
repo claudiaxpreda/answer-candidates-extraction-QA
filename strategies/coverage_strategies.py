@@ -14,7 +14,6 @@ from bleurt_pytorch import BleurtConfig, BleurtForSequenceClassification, Bleurt
 from sentence_transformers import SentenceTransformer
 
 
-HUGGING_TOKEN = ""
 TOP = 10
 TOP5 = 5
 DATASET_CLASS_PATH = ''
@@ -229,7 +228,7 @@ def get_kmeans_distance(text, group, top=TOP5):
     return list(zip(answers, questions, start_chars, end_chars))
 
 
-text, test = get_random_entry(DATASET_CLASS)
+text, test = get_random_entry(DATASET_CLASS_PATH)
 
 print('========CONTEXT========')
 print(text)
