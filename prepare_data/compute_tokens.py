@@ -1,10 +1,11 @@
 import pandas as pd
-from transformers import DebertaV2TokenizerFast
+from transformers import DebertaV2TokenizerFast, AutoTokenizer
 
 MAX_LEN_SEQ = 512
 splits = ['test', 'validation', 'train']
+# splits = ['test']
 
-def get_bert_token_indexes(context, pair_indx, seq, tokenizer, debug=True, level='d', space_p=True):
+def get_bert_token_indexes(context, pair_indx, seq, tokenizer, debug=True, level='b', space_p=True, tokens=[1, 2, 0, 50264]):
   start=-1
   end=-1
   contor=0
@@ -21,16 +22,17 @@ def get_bert_token_indexes(context, pair_indx, seq, tokenizer, debug=True, level
     if debug  and level == 'v':
       print(token_id, pos, context[pos[0]:pos[1]])  
 
-    if pos_0 == pair_indx[0] and pos[1] == pair_indx[1] and token_id != 1 and token_id != 2 and token_id != 0 and token_id != 50264:
+    if pos_0 == pair_indx[0] and pos[1] == pair_indx[1] and token_id not in tokens:
       start = contor
       end = contor
       return (start, end)
 
-    if pos_0 == pair_indx[0] and pair_indx[1] > pos[1] and token_id != 1 and token_id != 2 and token_id != 0 and token_id != 50264:
+    if pos_0 == pair_indx[0] and pair_indx[1] > pos[1] and token_id not in tokens:
       start = contor
 
-    if pos_0 > pair_indx[0]  and pos[1] == pair_indx[1] and token_id != 1 and token_id != 2 and token_id != 0 and token_id != 50264:
+    if pos_0 > pair_indx[0]  and pos[1] == pair_indx[1] and token_id not in tokens:
       end = contor + 1
+
 
     contor += 1
 
@@ -49,6 +51,8 @@ def get_bert_token_indexes(context, pair_indx, seq, tokenizer, debug=True, level
   if debug and (level == 'n' or level == 'v'):
       print('== Current sequnece ==\n')
       print(check_string)
+      print(check_string.strip())
+      assert check_string.strip() == seq
   
   if start == -1 or end == -1: 
     start = - 1
@@ -57,8 +61,8 @@ def get_bert_token_indexes(context, pair_indx, seq, tokenizer, debug=True, level
   return (start, end)
 
 def compute_token_indexes(source_dataset, tokenizer):
-  source_dataset['token_indexes'] = source_dataset.apply(
-    lambda e : get_bert_token_indexes(e['context'], (e['start_char'], e['end_char']), e['sequence'], tokenizer), axis=1) 
+  source_dataset['token_indexes_updated'] = source_dataset.apply(
+    lambda e : get_bert_token_indexes(e['context'], (e['start_char'], e['end_char']), e['sequence'], tokenizer, tokens=[50281, 50283, 50282]), axis=1) 
   
   indx_to_drop=source_dataset[source_dataset.token_indexes == (-1,-1)].index
   
@@ -70,14 +74,16 @@ def compute_token_indexes(source_dataset, tokenizer):
   return source_dataset
 
 
-model_name='microsoft/deberta-v3-base'
-tokenizer=DebertaV2TokenizerFast.from_pretrained(model_name, add_prefix_space=True)
-
+#model_name='microsoft/deberta-v3-base'
+model_name = 'answerdotai/ModernBERT-base'
+# Fot DeBERTa space_p is set to true
+# tokenizer=DebertaV2TokenizerFast.from_pretrained(model_name, add_prefix_space=True)
+tokenizer = AutoTokenizer.from_pretrained(model_name, add_prefix_space=True)
 
 for split in splits:
   print(split)
-  path_to_load = f'../fairytale_dataset/remastered/ft_og_{split}.csv'
-  path_to_save = f'../fairytale_dataset/remastered/ft_og_{split}_tokens.csv'
+  path_to_load = f'data/final/{split}_labeled.csv'
+  path_to_save = f'data/final/{split}_labeled_updated.csv'
   source_dataset = pd.read_csv(path_to_load, keep_default_na=False)
   df_dataset = compute_token_indexes(source_dataset, tokenizer)
   df_dataset.to_csv(path_to_save, index=False)

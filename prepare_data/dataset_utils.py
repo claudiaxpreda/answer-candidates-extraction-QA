@@ -4,7 +4,8 @@ import pandas as pd
 import ast
 import numpy as np
 
-from matplotlib import pyplot as plt
+from transformers import DebertaV2TokenizerFast, AutoTokenizer
+
 
 
 def read_slice(source_file): 
@@ -36,9 +37,10 @@ def concat_files(list_of_files, path, write_output=False, target_name=''):
 
 def get_avg_len_pad():
   test_dataset_path = ''
-  val_dataset_path = ''
+  val_dataset_path = '' 
   train_dataset_path = 'd'
-  tokenizer=BertTokenizerFast.from_pretrained("bert-base-uncased")  
+  model_name = 'answerdotai/ModernBERT-base'
+  tokenizer = AutoTokenizer.from_pretrained(model_name, add_prefix_space=True)
   max_len_pad = '100'
   
   x_train, y_train, gt = pi.prepare_input(read_slice(train_dataset_path), tokenizer, int(max_len_pad))
